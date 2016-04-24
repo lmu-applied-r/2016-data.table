@@ -1,0 +1,419 @@
+---
+title: "data.table in R"
+subtitle: 'Applied R Munich'
+author: "Janek Thomas"
+date: "25. January 2016"
+output: ioslides_presentation
+---
+
+## About me
+<img src="janek.jpg" style="height:200px;width:200px;float:right" />
+
+- Studied statistics at the Ludwig-Maximilians-University Munich
+- Currently doing a PhD in computational statistics
+- Meetups: 
+    * [Munich datageeks](http://munich-datageeks.de/)
+    * [Applied R Munich](http://lmu-applied-r.github.io/)
+- Slides:
+    * https://github.com/lmu-applied-r/2016-data.table
+<br>
+
+   
+   
+*statistics*, *machine learning*, *R*, *boosting*, *model selection*, 
+*optimization*, *Linux*, *ensemble methods*, *parallel programming*,
+*data mining*, *support vector machines*, *visualization*, *python*, *SQL*, 
+*predictive modelling*, ...
+
+
+## *data.table*
+
+- R package by M Dowle, A Srinivasan, T Short, S Lianoglou, ...
+- Current version: 1.9.6 (CRAN), 1.9.7 (devel)
+- Description:
+
+    Fast aggregation of large data (e.g. 100GB in RAM), fast ordered
+    joins, fast add/modify/delete of columns by group using
+    no copies at all, list columns and a fast file reader (fread). Offers a 
+    natural and flexible syntax, for faster development.
+
+```{r, eval=FALSE}
+install.packages("data.table")
+```
+```{r}
+library(data.table)
+```
+
+## What is a *data.frame*?
+
+A data.frame is like
+
+- a  `matrix()` which can have different types of data in it (integer, character, factors, etc.)
+- a `list()` of vectors which all have the same length. 
+
+
+```{r}
+data.frame(a = c(1,2,3,5), b = c("A", "B", "C", "D"))
+```
+
+## And what's the thing about *data.table*?
+
+- More efficient syntax:
+    * (almost) everything can be done in square brackets `[]`
+    * Fewer repititions of variable names
+- Faster calculations:
+    * Faster aggregation
+    * Update by reference
+- Less memory required (not quite true for small datasets)
+- Fast reading of tabular data
+
+And one of the most important things:
+
+    Any R function from any R package can be used in queries not just the 
+    subset of functions made available by a database backend
+
+
+## *data.frame*, *data.table* and *SQL*
+
+Selection     | *data.frame*  | *data.table*  | *SQL*
+------------- | ------------- | ------------- |------------- 
+Rows          | `DF[i, ]`     | `DT[i]`       | _WHERE_
+Columns       | `DF[ , j]`    | `DT[, .(j)]`  | _SELECT_
+Grouping      | _???_         | `DT[by = ...]`| _GROUP BY_
+
+
+## *data.tables* general form
+
+```{r, eval=FALSE}
+DT[  i  ,          j     , by]
+DT[where, select|update|do, by]
+```
+
+    Take rows i, calculate j and group by
+    
+Wait a minute, why *calculate j*? Don't we only want to select columns?
+
+
+```{r, eval = TRUE, results='hide'}
+data("mtcars")
+mtcarsDT = data.table(mtcars)
+mtcarsDT[mpg > 20,
+         .(AvgHP = mean(hp),
+           "MinWT(kg)" = min(wt*453.6)),
+         by = .(cyl, under5gears = gear < 5)]
+```
+
+Implicit calculation of new variables, more to come...
+
+## Example data: *mtcars*
+
+Motor Trend Car Road Tests
+
+```{r}
+dim(mtcars)
+ls.str(mtcars)
+```
+
+
+## Let's start with *i*
+* Rows 1 - 3:
+    * `mtcars[1:3, ]`
+    * `mtcarsDT[1:3]`
+* Only cars with 5 gears:
+    * `mtcars[mtcars$gear == 5, ]`
+    *  `mtcarsDT[gear == 5]`
+* Only cars with 5 gears and more than 20 mpg:
+    * `mtcars[mtcars$gear == 5 & mtcars$mpg > 20, ]`
+    * `mtcarsDT[gear == 5 & mpg > 20]`
+
+* Top 10% fuel efficient cars:
+    * `mtcars[mtcars$mpg >= quantile(mtcars$mpg, 0.9), ]`
+    * `mtcarsDT[mpg >= quantile(mpg, 0.9)]`
+
+
+## *j*: select, update and calculate colums
+
+If you want to select more than one column, you have to wrap you selection in `.()`.
+```{r, eval=FALSE}
+mtcarsDT[, .(mpg, cyl)]
+```
+
+With this, you can directly calculate stuff:
+```{r}
+mtcarsDT[, .(mean_mpg = mean(mpg), 
+             min_mpg = min(mpg),
+             max_mpg = max(mpg))]
+```
+
+## *j*: select, update and calculate colums
+
+_Warning_: Selection via column numbers does _not_ work anymore!
+```{r}
+mtcarsDT[, 1] # identicyl with mtcarsDT[, .(1)]
+```
+
+`data.frame`-like behavior can be forced with `with = FALSE`. (not recommended) 
+
+```{r}
+mtcarsDT[, 1, with = FALSE]
+```
+
+
+## *j*: select, update and calculate colums
+_Nice to know_: You can use (almost) every function in *j*.
+
+```{r}
+mtcarsDT[, .(plot(mpg, hp))]
+```
+
+## Grouping with *by*
+Again, use `.()` for multiple variables (or just us it always)
+```{r}
+mtcarsDT[, .(mean_mpg = mean(mpg)), by = .(cyl)]
+```
+We can use functions in  *by*:
+```{r}
+mtcarsDT[, .(mean_mpg = mean(mpg)),
+             by = .(tons = round(wt * 0.4536))]
+```
+
+
+## Grouping with *by*
+_Nice to know_: `.N` is a shortcut for `nrow()`
+
+```{r}
+mtcarsDT[, .(Nobs = .N), 
+         by = .(cyl, am)]
+```
+
+
+## And now, everything together
+For all cars with at least 20 miles per galon find the mean horse power and weight in kg, grouped 
+by the number of cylinders and if they have less than five gears.
+```{r}
+mtcarsDT[mpg >= 20,
+         .(AvgHP = mean(hp),
+           "MinWT(kg)" = min(wt*453.6)),
+         by = .(cyl, under5gears = gear < 5)]
+```
+
+
+## Fast search with *keys*
+
+- *keys* are set as one (or more) columns in a dataset
+- The dataset is always sorted (ascending) by *keys*
+- *keys* do _not_ need to be unique
+- (Don't think about these like primary keys in SQL)
+```{r}
+setkeyv(mtcarsDT, "cyl")
+head(mtcarsDT)
+```
+
+## Fast search with *keys*
+
+We can quickly filter for key values:
+
+```{r}
+mtcarsDT[.(6)]
+```
+
+## Fast search with *keys*
+
+If multiple keys are set, they can be queried together:
+
+```{r}
+setkeyv(mtcarsDT, c("cyl", "carb"))
+mtcarsDT[.(6, 4)]
+```
+
+## Define variables `:=`
+
+Variables can directly be added, changed or deleted in the *j* part:
+```{r, eval=FALSE}
+#new variable - weight in kg
+mtcarsDT[, wt_kg := wt * 0.4536]
+
+#changed variable - weight with only 2 digits
+mtcarsDT[, wt_kg := round(wt_kg, 2)]
+
+#delete variable - remove weight in kg
+mtcarsDT[, wt_kg := NULL]
+```
+
+
+## Define variables `:=`
+
+_Warning_: `:=` is modifying *by reference*, which means:
+```{r}
+mtcarsDT[, wt_kg := wt * 45.36]
+```
+Changes the dataset `mtcarsDT`!
+
+A new assignment via `<-` or `=` is _not_ enough, you have to to use `copy()` if you actually want
+to change a dataset.
+
+## Define variables `:=`
+
+```{r}
+ncol(mtcarsDT)
+mtcarsDT2 = mtcarsDT
+mtcarsDT2[, wt_kg := NULL]
+ncol(mtcarsDT)
+```
+
+*wt_kg* was removed in `mtcarsDT` as well!
+
+## VDefine variables `:=`
+```{r}
+mtcarsDT[, wt_kg := wt * 45.36]
+ncol(mtcarsDT)
+mtcarsDT2 <- copy(mtcarsDT)
+mtcarsDT2[, wt_kg := NULL]
+ncol(mtcarsDT)
+```
+
+_But_: 
+
+    A new referenced dataset does not need additional memory!
+
+
+
+## Fast data import with `fread`
+
+*data.table* offers with `fread()` a function to read in large (tabular) data extremly efficient. 
+
+No benchmark but you can find a million SO:
+
+http://stackoverflow.com/questions/1727772/quickly-reading-very-large-tables-as-dataframes-in-r http://www.biostat.jhsph.edu/~rpeng/docs/R-large-tables.html https://stat.ethz.ch/pipermail/r-help/2007-August/138315.html http://www.cerebralmastication.com/2009/11/loading-big-data-into-r/ http://stackoverflow.com/questions/9061736/faster-than-scan-with-rcpp http://stackoverflow.com/questions/415515/how-can-i-read-and-manipulate-csv-file-data-in-c http://stackoverflow.com/questions/9352887/strategies-for-reading-in-csv-files-in-pieces http://stackoverflow.com/questions/11782084/reading-in-large-text-files-in-r http://stackoverflow.com/questions/45972/mmap-vs-reading-blocks http://stackoverflow.com/questions/258091/when-should-i-use-mmap-for-file-access http://stackoverflow.com/a/9818473/403310 http://stackoverflow.com/questions/9608950/reading-huge-files-using-memory-mapped-files ...
+
+
+## Transforming data with `reshape2`
+
+`reshape2` is a package for efficient data transformation
+
+Two of the most important function for us are `melt` and `dcast`
+
+<br>
+<br>
+*wide* -> *long* : `melt`
+
+*long* -> *wide* : `dcast`
+
+
+##`reshape2`: `melt`
+
+```{r}
+wd <- data.frame(person = 1:3, 
+                 weight = round(runif(3, min = 60, max = 90)),
+                 size = round(runif(3, min = 160, max = 190)))
+wd
+                 
+```
+`wd` is in *wide* format!
+
+##`reshape2`: `melt`
+
+```{r}
+wd_long <- melt(wd, id = "person")
+wd_long
+```
+
+Die column *variable* can be set with `variable.name =`.
+
+##`reshape2`: `dcast`
+
+```{r}
+wd_wide <- dcast(wd_long, person ~ variable)
+wd_wide
+
+all.equal(wd_wide, wd)
+```
+
+
+Both `melt` and `dcast` can work with multiple factors,
+
+##`reshape2` for *data.table*
+
+So why did we talk about `reshape2`?
+
+`melt` and `dcast` are both implemented for *data.table*s!
+ 
+_Warning_: `reshape` from *base* R always returns a *data.frame*!
+
+
+## _JOIN_ing *data.tables*
+
+JOIN          | *data.frame*               | *data.table*       | 
+------------- | -------------------------- | ------------------ |
+INNER         | `merge(X, Y, all = FALSE)` | `X[Y, nomatch = 0]`|
+LEFT OUTER    | `merge(X, Y, all.x = TRUE)`| `Y[X]`             |
+RIGHT OUTER   | `merge(X, Y, all.y = TRUE)`| `X[Y]`             |
+FULL OUTER    | `merge(X, Y, all = TRUE)`  |  -                 |
+
+<br>
+`merge()` Works for for *data.table* as well (required for a FULL OUTER JOIN)
+
+
+## The _most important_ functionality
+
+
+```{r}
+data.table(x = rnorm(1000), y = rnorm(1000))
+
+```
+
+`print` function that doesn't break R for large datasets!
+
+
+## Summary
+
+- Filter rows in *i*
+    - Set *key* for even faster filtering
+- Do arbitrary calculations in *j* 
+    - Always wrap in `.()`
+    - Known *data.frame* syntax only works with `with = FALSE`
+- Grouping with *by*
+    - Again, wrap in `.()`
+    - Functions can be used as well
+- Define, update and delete variables with `:=`
+    - Remember that all this is done *by reference*
+- Use `melt` and `dcast` instead of `reshape`
+- JOINS can be done with a minimal syntax 
+
+
+
+
+## Resources
+- https://cran.r-project.org/web/packages/data.table/
+- Vignetten: [1](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro-vignette.html), [2](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-keys-fast-subset.html), [3](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reference-semantics.html), [4](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-reshape.html)
+- [Cheat Sheet](https://s3.amazonaws.com/assets.datacamp.com/img/blog/data+table+cheat+sheet.pdf)
+- Video lectures at https://www.datacamp.com/
+    - Only the first session is free :(
+    - Most of my examples are borrowed from there!
+- Talk by Matt Dowle at UseR2014
+    - [klick](http://user2014.stat.ucla.edu/files/tutorial_Matt.pdf)
+
+## Alternatives
+
+- `dplyr`: Uses chaining syntax `%>%`
+    - https://github.com/lmu-applied-r/2015-dplyr (Applied R Munich)
+-  SQL or noSQL databases (external)
+- Commercial R version: Revolution R / Microsoft R, H2O
+- ...
+- Wait and drink even more coffee
+- ...
+- Suggestions?    
+
+## Questions?
+
+<br>
+<br>
+Thank you for your attention
+<br>
+<br>
+<br>
+Questions? Remarks? Suggestions?
+
+
+
+
