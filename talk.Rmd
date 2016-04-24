@@ -1,5 +1,5 @@
 ---
-title: "data.table in R"
+title: "Introduction to data.tables"
 subtitle: 'Applied R Munich'
 author: "Janek Thomas"
 date: "25. April 2016"
@@ -22,7 +22,7 @@ output: ioslides_presentation
    
 *statistics*, *machine learning*, *R*, *boosting*, *model selection*, 
 *optimization*, *Linux*, *ensemble methods*, *parallel programming*,
-*data mining*, *support vector machines*, *visualization*, *python*, *SQL*, 
+*data mining*, *visualization*, *python*, *SQL*, *data science*,
 *predictive modelling*, ...
 
 
@@ -48,7 +48,7 @@ library(data.table)
 
 A data.frame is like
 
-- a  `matrix()` which can have different types of data in it (integer, character, factors, etc.)
+- a  `matrix()` in which columns can have different types of data in it (integer, character, factors, etc.)
 - a `list()` of vectors which all have the same length. 
 
 
@@ -65,7 +65,7 @@ data.frame(a = c(1,2,3,5), b = c("A", "B", "C", "D"))
     * Faster aggregation
     * Update by reference
 - Less memory required (not quite true for small datasets)
-- Fast reading of tabular data
+- Fast import of tabular data
 
 And one of the most important things:
 
@@ -81,6 +81,7 @@ Rows          | `DF[i, ]`     | `DT[i]`       | _WHERE_
 Columns       | `DF[ , j]`    | `DT[, .(j)]`  | _SELECT_
 Grouping      | _???_         | `DT[by = ...]`| _GROUP BY_
 
+`data.table` offers a syntax similiar to _SQL_
 
 ## *data.tables* general form
 
@@ -109,10 +110,29 @@ Implicit calculation of new variables, more to come...
 
 Motor Trend Car Road Tests
 
-```{r}
-dim(mtcars)
-ls.str(mtcars)
-```
+A data frame with 32 observations on 11 variables.
+
+######[, 1]	 mpg	 Miles/(US) gallon
+
+######[, 2]	 cyl	 Number of cylinders
+
+######[, 3]	 disp	 Displacement (cu.in.)
+
+######[, 4]	 hp	 Gross horsepower
+
+######[, 5]	 drat	 Rear axle ratio
+
+######[, 6]	 wt	 Weight (1000 lbs)
+
+######[, 7]	 qsec	 1/4 mile time
+
+######[, 8]	 vs	 V/S
+
+######[, 9]	 am	 Transmission (0 = automatic, 1 = manual)
+
+######[,10]	 gear	 Number of forward gears
+
+######[,11]	 carb	 Number of carburetors
 
 
 ## Let's start with *i*
@@ -149,10 +169,10 @@ mtcarsDT[, .(mean_mpg = mean(mpg),
 
 _Warning_: Selection via column numbers does _not_ work anymore!
 ```{r}
-mtcarsDT[, 1] # identicyl with mtcarsDT[, .(1)]
+mtcarsDT[, 1] # identical to mtcarsDT[, .(1)]
 ```
 
-`data.frame`-like behavior can be forced with `with = FALSE`. (not recommended) 
+`data.frame`-like behavior can be forced with `with = FALSE`. 
 
 ```{r}
 mtcarsDT[, 1, with = FALSE]
@@ -226,6 +246,15 @@ setkeyv(mtcarsDT, c("cyl", "carb"))
 mtcarsDT[.(6, 4)]
 ```
 
+##Fast search with *keys*
+
+Multiple key values of one key can be selected with a vector `c()`
+
+```{r}
+mtcarsDT[.(c(6,4), 1)]
+```
+
+
 ## Define variables `:=`
 
 Variables can directly be added, changed or deleted in the *j* part:
@@ -249,8 +278,8 @@ mtcarsDT[, wt_kg := wt * 45.36]
 ```
 Changes the dataset `mtcarsDT`!
 
-A new assignment via `<-` or `=` is _not_ enough, you have to to use `copy()` if you actually want
-to change a dataset.
+A new assignment via `<-` or `=` is _not_ enough to preserve the original state of a dataset,
+you have to to use `copy()` if you want an actual copy.
 
 ## Define variables `:=`
 
@@ -263,7 +292,7 @@ ncol(mtcarsDT)
 
 *wt_kg* was removed in `mtcarsDT` as well!
 
-## VDefine variables `:=`
+## Define variables `:=`
 ```{r}
 mtcarsDT[, wt_kg := wt * 45.36]
 ncol(mtcarsDT)
@@ -341,7 +370,7 @@ So why did we talk about `reshape2`?
 _Warning_: `reshape` from *base* R always returns a *data.frame*!
 
 
-## _JOIN_ing *data.tables*
+## JOINing *data.tables*
 
 JOIN          | *data.frame*               | *data.table*       | 
 ------------- | -------------------------- | ------------------ |
@@ -381,6 +410,17 @@ data.table(x = rnorm(1000), y = rnorm(1000))
 - JOINS can be done with a minimal syntax 
 
 
+## What else?
+
+This talk mainly focuses on the basic syntax of `data.table`s.
+
+There are some more advanced features:
+
+- ordered JOINS (rolling forwards, backwards, ...)
+- overlapping range JOINS [?](https://github.com/Rdatatable/data.table/wiki/talks/EARL2014_OverlapRangeJoin_Arun.pdf)
+- Chaining of multiple queries `DT[][]`
+- Customize queries with `mult` and `nomatch`
+- ... (probably more stuff I have no idea about)
 
 
 ## Resources
@@ -389,7 +429,7 @@ data.table(x = rnorm(1000), y = rnorm(1000))
 - [Cheat Sheet](https://s3.amazonaws.com/assets.datacamp.com/img/blog/data+table+cheat+sheet.pdf)
 - Video lectures at https://www.datacamp.com/
     - Only the first session is free :(
-    - Most of my examples are borrowed from there!
+    - Most of my examples are "borrowed" from there!
 - Talk by Matt Dowle at UseR2014
     - [klick](http://user2014.stat.ucla.edu/files/tutorial_Matt.pdf)
 
@@ -406,6 +446,7 @@ data.table(x = rnorm(1000), y = rnorm(1000))
 
 ## Questions?
 
+<br>
 <br>
 <br>
 Thank you for your attention
