@@ -90,7 +90,7 @@
       <h2 data-config-subtitle><!-- populated from slide_config.json --></h2>
       <p data-config-presenter><!-- populated from slide_config.json --></p>
             <p style="margin-top: 6px; margin-left: -2px;"><ol start="25" style="list-style-type: decimal">
-<li>January 2016</li>
+<li>April 2016</li>
 </ol></p>
           </hgroup>
   </slide>
@@ -519,9 +519,9 @@ ncol(mtcarsDT)</pre>
 wd</pre>
 
 <pre >##   person weight size
-## 1      1     64  181
-## 2      2     89  182
-## 3      3     67  174</pre>
+## 1      1     75  185
+## 2      2     79  176
+## 3      3     71  172</pre>
 
 <p><code>wd</code> is in <em>wide</em> format!</p>
 
@@ -531,12 +531,12 @@ wd</pre>
 wd_long</pre>
 
 <pre >##   person variable value
-## 1      1   weight    64
-## 2      2   weight    89
-## 3      3   weight    67
-## 4      1     size   181
-## 5      2     size   182
-## 6      3     size   174</pre>
+## 1      1   weight    75
+## 2      2   weight    79
+## 3      3   weight    71
+## 4      1     size   185
+## 5      2     size   176
+## 6      3     size   172</pre>
 
 <p>Die column <em>variable</em> can be set with <code>variable.name =</code>.</p>
 
@@ -546,9 +546,9 @@ wd_long</pre>
 wd_wide</pre>
 
 <pre >##   person weight size
-## 1      1     64  181
-## 2      2     89  182
-## 3      3     67  174</pre>
+## 1      1     75  185
+## 2      2     79  176
+## 3      3     71  172</pre>
 
 <pre class = 'prettyprint lang-r'>all.equal(wd_wide, wd)</pre>
 
@@ -600,18 +600,18 @@ wd_wide</pre>
 
 <pre class = 'prettyprint lang-r'>data.table(x = rnorm(1000), y = rnorm(1000))</pre>
 
-<pre >##                x           y
-##    1: -0.8061042  0.34661082
-##    2:  0.3034157 -1.35142279
-##    3: -0.9173116  0.05610081
-##    4:  0.6990956  1.02554250
-##    5:  1.2749526  1.16837864
-##   ---                       
-##  996: -0.5163474  0.78479051
-##  997:  0.6630495  1.34307570
-##  998: -0.1647433  1.99460351
-##  999:  2.1005217  1.06012629
-## 1000:  0.5482757 -1.94254962</pre>
+<pre >##                x          y
+##    1:  1.0201854 -2.0550449
+##    2: -1.5246722  0.7703683
+##    3:  0.2524783 -2.1811444
+##    4: -0.3705168  0.5306593
+##    5: -0.5101991 -1.9387516
+##   ---                      
+##  996: -1.0933611 -1.9282195
+##  997:  1.1672191 -1.2570716
+##  998: -1.4261246 -1.8256793
+##  999:  0.0797252  0.1787045
+## 1000: -0.3753844 -0.7555112</pre>
 
 <p><code>print</code> function that doesn&#39;t break R for large datasets!</p>
 
