@@ -8,7 +8,8 @@ output: html_document
 1. Load the `mpg` dataset from the package `ggplot2`. Check which class the dataset has and 
     convert it to a `data.table`.
     
-2. Set manufacturer and class as keys for the dataset.
+2. Set manufacturer and class as keys for the dataset. Then, select the subset of every nissan and
+audi compact.
     
 3. Calculate the frequencies in which each combination of manufacturer and class is 
     observered.
@@ -18,10 +19,10 @@ output: html_document
 5. Calculate a new variable that is the deviation of the displacement from the mean 
     displacement for its class.
     
-6.  Calculate the average miles per gallon relativ to the number of cylinders for every dodge, 
+6.  Calculate the average city miles per gallon relativ to the number of cylinders for every dodge, 
     grouped by the year the car was build.
     
-7.  Which car has the biggest difference between city and highway miles per gallon?
+7.  Which from year 1999 the biggest difference between city and highway miles per gallon?
     
 8.  Predict the displacement with a linear model from the year, number of cylinders, city and 
     highway miles per gallon. Use a seperate model for every combination of manufacturer and class
