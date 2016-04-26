@@ -1,0 +1,79 @@
+---
+title: "data.table Exercises - Solution"
+author: "Janek Thomas"
+date: "25. April 2016"
+output: html_document
+---
+
+1. Load the `mpg` dataset from the package `ggplot2`. Check which class the dataset has and 
+    convert it to a `data.table`.
+    
+```{r}
+library(data.table)
+data(mpg, package = "ggplot2")
+class(mpg)
+mpg = data.table(mpg)
+class(mpg)
+```
+
+2. Set manufacturer and class as keys for the dataset. Then, select the subset of every nissan and
+audi compact.
+
+```{r}
+setkey(mpg, manufacturer, class)
+# alternative:
+# setkeyv(mpg, c("manufacturer", "class"))
+mpg[.(c("nissan", "audi"), "compact")]
+
+```
+
+    
+3. Calculate the frequencies in which each combination of manufacturer and class is 
+    observered.
+
+```{r}
+mpg[, .N, by = .(manufacturer, class)]
+```
+
+4.  Which manufacturer builds the cars with the most engine displacement on average?
+
+```{r}
+mpg[, .(meanDispl = mean(displ)), by = .(manufacturer)][order(meanDispl, decreasing = TRUE)]
+```
+
+    
+5. Calculate a new variable that is the deviation of the displacement from the mean 
+    displacement for its class.
+    
+```{r}
+mpg[, displDev := displ - mean(displ), by = .(class)]
+mpg
+```
+
+    
+6.  Calculate the average city miles per gallon relativ to the number of cylinders for every dodge, 
+    grouped by the year the car was build.
+    
+```{r}
+mpg["dodge", .(relMpg = mean(cty / cyl)), by = .(year)]
+```
+
+    
+7.  Which car from year 1999 has the biggest difference between city and highway miles per gallon?
+
+```{r}
+mpg[, diff := abs(cty - hwy)]
+mpg[year == 1999][order(diff, decreasing = TRUE)]
+```
+
+    
+8.  Predict the displacement with a linear model from the year, number of cylinders, city and 
+    highway miles per gallon. Use a seperate model for every combination of manufacturer and class
+    and save your predictions as a new variable in the dataset.
+
+   
+```{r}
+mpg[, predDisp := predict(lm(displ ~ year + cyl + cty + hwy)), by = .(manufacturer, class)]
+mpg
+```
+
